@@ -691,7 +691,7 @@
                 <div class="sides-section" style="background: #fff3cd; margin-bottom: 15px;">
                     <div class="sides-title">🍖 This Week's Main Proteins (3 dishes)</div>
                     <div style="font-size: 14px; color: #333;">
-                        ${weekPlan.mainMeals.map(m => `<div>• ${m.name} <span class="cuisine-badge cuisine-${m.cuisine}">${m.cuisine}</span></div>`).join('')}
+                        ${weekPlan.mainMeals.map(m => `<div>• ${m.name} <span class="cuisine-badge cuisine-${m.cuisine}">${m.cuisine}</span> <span style="font-size:11px; color:#666;">(${m.cal} cal, P:${m.p}g)</span></div>`).join('')}
                     </div>
                 </div>
                 <div class="sides-section" style="background: #d4edda; margin-bottom: 15px;">
@@ -701,23 +701,44 @@
                         <div><strong>Carbs:</strong> ${weekPlan.weekCarbs.join(', ')}</div>
                     </div>
                 </div>
-                ${days.map(day => `
+                <div class="sides-section" style="background: #e8f4fd; margin-bottom: 15px;">
+                    <div class="sides-title">📊 Daily Average Macros</div>
+                    <div class="macros" style="justify-content: center;">
+                        <span class="macro-tag macro-cal">${weekPlan.avgCal || '—'} cal</span>
+                        <span class="macro-tag macro-p">P: ${weekPlan.avgP || '—'}g</span>
+                        <span class="macro-tag macro-c">C: ${weekPlan.avgC || '—'}g</span>
+                        <span class="macro-tag macro-f">F: ${weekPlan.avgF || '—'}g</span>
+                    </div>
+                </div>
+                ${days.map(day => {
+                    const dayPlan = weekPlan.plan[day];
+                    const isObject = typeof dayPlan.breakfast === 'object';
+                    return `
                     <div class="week-day">
                         <div class="day-header">📆 ${day}</div>
-                        <div class="meal-slot">
-                            <span class="slot-label">🍳 Breakfast</span>
-                            <span class="slot-meal">${weekPlan.plan[day].breakfast}</span>
+                        <div class="meal-slot" style="flex-direction: column; align-items: flex-start;">
+                            <div style="display: flex; justify-content: space-between; width: 100%;">
+                                <span class="slot-label">🍳 Breakfast</span>
+                                <span class="slot-meal">${isObject ? dayPlan.breakfast.name : dayPlan.breakfast}</span>
+                            </div>
+                            ${isObject ? `<div class="macros" style="margin-top:4px;"><span class="macro-tag macro-cal">${dayPlan.breakfast.cal} cal</span><span class="macro-tag macro-p">P:${dayPlan.breakfast.p}g</span><span class="macro-tag macro-c">C:${dayPlan.breakfast.c}g</span><span class="macro-tag macro-f">F:${dayPlan.breakfast.f}g</span></div>` : ''}
                         </div>
-                        <div class="meal-slot">
-                            <span class="slot-label">🥗 Lunch</span>
-                            <span class="slot-meal">${weekPlan.plan[day].lunch}</span>
+                        <div class="meal-slot" style="flex-direction: column; align-items: flex-start;">
+                            <div style="display: flex; justify-content: space-between; width: 100%;">
+                                <span class="slot-label">🥗 Lunch</span>
+                                <span class="slot-meal">${isObject ? dayPlan.lunch.name : dayPlan.lunch}</span>
+                            </div>
+                            ${isObject ? `<div class="macros" style="margin-top:4px;"><span class="macro-tag macro-cal">${dayPlan.lunch.cal} cal</span><span class="macro-tag macro-p">P:${dayPlan.lunch.p}g</span><span class="macro-tag macro-c">C:${dayPlan.lunch.c}g</span><span class="macro-tag macro-f">F:${dayPlan.lunch.f}g</span></div>` : ''}
                         </div>
-                        <div class="meal-slot">
-                            <span class="slot-label">🍛 Dinner</span>
-                            <span class="slot-meal">${weekPlan.plan[day].dinner}</span>
+                        <div class="meal-slot" style="flex-direction: column; align-items: flex-start;">
+                            <div style="display: flex; justify-content: space-between; width: 100%;">
+                                <span class="slot-label">🍛 Dinner</span>
+                                <span class="slot-meal">${isObject ? dayPlan.dinner.name : dayPlan.dinner}</span>
+                            </div>
+                            ${isObject ? `<div class="macros" style="margin-top:4px;"><span class="macro-tag macro-cal">${dayPlan.dinner.cal} cal</span><span class="macro-tag macro-p">P:${dayPlan.dinner.p}g</span><span class="macro-tag macro-c">C:${dayPlan.dinner.c}g</span><span class="macro-tag macro-f">F:${dayPlan.dinner.f}g</span></div>` : ''}
                         </div>
                     </div>
-                `).join('')}
+                `}).join('')}
             `;
         }
 
@@ -746,6 +767,7 @@
             const weekCarbs = [...carbs].sort(() => Math.random() - 0.5).slice(0, 2);
             
             const plan = {};
+            let totalCal = 0, totalP = 0, totalC = 0, totalF = 0;
             
             days.forEach((day, index) => {
                 // Rotate through breakfasts
@@ -753,26 +775,34 @@
                 
                 // Use main meals and mix with sides
                 const mainMeal = mainMeals[index % 3];
+                const altMeal = mainMeals[(index + 1) % 3];
+                const dinnerMeal = mainMeals[(index + 2) % 3];
                 const veggie = weekVeggies[index % weekVeggies.length];
                 const carb = weekCarbs[index % weekCarbs.length];
                 
                 // Alternate main meal between lunch and dinner
                 if (index % 2 === 0) {
                     plan[day] = {
-                        breakfast: breakfast.name,
-                        lunch: `${mainMeal.name} + ${veggie} + ${carb}`,
-                        dinner: `Leftover ${mainMeals[(index + 1) % 3].name} + ${weekVeggies[(index + 1) % weekVeggies.length]}`
+                        breakfast: { name: breakfast.name, cal: breakfast.cal, p: breakfast.p, c: breakfast.c, f: breakfast.f },
+                        lunch: { name: `${mainMeal.name} + ${veggie} + ${carb}`, cal: mainMeal.cal, p: mainMeal.p, c: mainMeal.c + 30, f: mainMeal.f },
+                        dinner: { name: `Leftover ${altMeal.name} + ${weekVeggies[(index + 1) % weekVeggies.length]}`, cal: Math.round(altMeal.cal * 0.7), p: Math.round(altMeal.p * 0.7), c: altMeal.c, f: Math.round(altMeal.f * 0.7) }
                     };
                 } else {
                     plan[day] = {
-                        breakfast: breakfast.name,
-                        lunch: `${weekVeggies[(index + 2) % weekVeggies.length]} Sabzi + ${carb}`,
-                        dinner: `${mainMeals[(index + 2) % 3].name} + ${veggie} + ${carb}`
+                        breakfast: { name: breakfast.name, cal: breakfast.cal, p: breakfast.p, c: breakfast.c, f: breakfast.f },
+                        lunch: { name: `${weekVeggies[(index + 2) % weekVeggies.length]} Sabzi + ${carb}`, cal: 180, p: 6, c: 35, f: 5 },
+                        dinner: { name: `${dinnerMeal.name} + ${veggie} + ${carb}`, cal: dinnerMeal.cal, p: dinnerMeal.p, c: dinnerMeal.c + 30, f: dinnerMeal.f }
                     };
                 }
+                
+                // Sum up daily macros
+                totalCal += plan[day].breakfast.cal + plan[day].lunch.cal + plan[day].dinner.cal;
+                totalP += plan[day].breakfast.p + plan[day].lunch.p + plan[day].dinner.p;
+                totalC += plan[day].breakfast.c + plan[day].lunch.c + plan[day].dinner.c;
+                totalF += plan[day].breakfast.f + plan[day].lunch.f + plan[day].dinner.f;
             });
             
-            weekPlan = { mainMeals, weekVeggies, weekCarbs, plan };
+            weekPlan = { mainMeals, weekVeggies, weekCarbs, plan, avgCal: Math.round(totalCal/5), avgP: Math.round(totalP/5), avgC: Math.round(totalC/5), avgF: Math.round(totalF/5) };
             localStorage.setItem('weekPlan', JSON.stringify(weekPlan));
             renderWeekPlan();
         }
