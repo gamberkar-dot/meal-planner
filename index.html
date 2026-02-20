@@ -363,6 +363,32 @@
             font-size: 10px;
             margin-left: 5px;
         }
+        
+        /* Macros display */
+        .macros {
+            display: flex;
+            gap: 8px;
+            margin-top: 4px;
+            flex-wrap: wrap;
+        }
+        
+        .macro-tag {
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 6px;
+            font-weight: 600;
+        }
+        
+        .macro-cal { background: #ffeaa7; color: #6c5ce7; }
+        .macro-p { background: #dfe6e9; color: #d63031; }
+        .macro-c { background: #dfe6e9; color: #0984e3; }
+        .macro-f { background: #dfe6e9; color: #fdcb6e; }
+        
+        .macro-inputs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
     </style>
 </head>
 <body>
@@ -471,6 +497,15 @@
                     <label class="form-label">Prep Time (mins)</label>
                     <input type="number" class="form-input" id="meal-time" required placeholder="30" min="5" max="120">
                 </div>
+                <div class="form-group">
+                    <label class="form-label">Macros (per serving)</label>
+                    <div class="macro-inputs">
+                        <input type="number" class="form-input" id="meal-calories" required placeholder="Calories" min="0">
+                        <input type="number" class="form-input" id="meal-protein-g" required placeholder="Protein (g)" min="0">
+                        <input type="number" class="form-input" id="meal-carbs" required placeholder="Carbs (g)" min="0">
+                        <input type="number" class="form-input" id="meal-fat" required placeholder="Fat (g)" min="0">
+                    </div>
+                </div>
                 <button type="submit" class="btn btn-primary">Save Meal</button>
                 <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
             </form>
@@ -478,93 +513,96 @@
     </div>
 
     <script>
-        // Default meal repository with mix of cuisines
+        // Default meal repository with mix of cuisines (macros: cal, p=protein g, c=carbs g, f=fat g)
         const defaultMeals = [
             // Breakfast options
-            { id: 1, name: "Masala Omelette", category: "breakfast", cuisine: "indian", protein: "Eggs", time: 15 },
-            { id: 2, name: "Paneer Paratha", category: "breakfast", cuisine: "indian", protein: "Paneer", time: 25 },
-            { id: 3, name: "Greek Yogurt Bowl", category: "breakfast", cuisine: "mediterranean", protein: "Greek Yogurt", time: 10 },
-            { id: 4, name: "Egg Fried Rice", category: "breakfast", cuisine: "chinese", protein: "Eggs", time: 20 },
-            { id: 5, name: "Avocado Toast with Eggs", category: "breakfast", cuisine: "american", protein: "Eggs", time: 15 },
-            { id: 6, name: "Besan Chilla", category: "breakfast", cuisine: "indian", protein: "Chickpea Flour", time: 20 },
-            { id: 7, name: "Scrambled Tofu", category: "breakfast", cuisine: "american", protein: "Tofu", time: 15 },
-            { id: 8, name: "Moong Dal Cheela", category: "breakfast", cuisine: "indian", protein: "Moong Dal", time: 25 },
-            { id: 31, name: "Poha with Peanuts", category: "breakfast", cuisine: "indian", protein: "Peanuts", time: 15 },
-            { id: 32, name: "Upma with Vegetables", category: "breakfast", cuisine: "indian", protein: "Semolina", time: 20 },
-            { id: 33, name: "Egg Bhurji", category: "breakfast", cuisine: "indian", protein: "Eggs", time: 15 },
-            { id: 34, name: "French Toast", category: "breakfast", cuisine: "american", protein: "Eggs", time: 15 },
-            { id: 35, name: "Idli with Sambar", category: "breakfast", cuisine: "indian", protein: "Lentils", time: 20 },
-            { id: 36, name: "Dosa with Chutney", category: "breakfast", cuisine: "indian", protein: "Lentils", time: 25 },
-            { id: 37, name: "Aloo Paratha", category: "breakfast", cuisine: "indian", protein: "Curd (side)", time: 25 },
-            { id: 38, name: "Smoothie Bowl", category: "breakfast", cuisine: "american", protein: "Protein Powder", time: 10 },
-            { id: 39, name: "Egg Sandwich", category: "breakfast", cuisine: "american", protein: "Eggs", time: 10 },
-            { id: 40, name: "Anda Pav", category: "breakfast", cuisine: "indian", protein: "Eggs", time: 15 },
-            { id: 41, name: "Sabudana Khichdi", category: "breakfast", cuisine: "indian", protein: "Peanuts", time: 20 },
-            { id: 42, name: "Vermicelli Upma", category: "breakfast", cuisine: "indian", protein: "Peanuts", time: 15 },
+            { id: 1, name: "Masala Omelette", category: "breakfast", cuisine: "indian", protein: "Eggs", time: 15, cal: 220, p: 14, c: 4, f: 16 },
+            { id: 2, name: "Paneer Paratha", category: "breakfast", cuisine: "indian", protein: "Paneer", time: 25, cal: 350, p: 12, c: 35, f: 18 },
+            { id: 3, name: "Greek Yogurt Bowl", category: "breakfast", cuisine: "mediterranean", protein: "Greek Yogurt", time: 10, cal: 200, p: 15, c: 25, f: 6 },
+            { id: 4, name: "Egg Fried Rice", category: "breakfast", cuisine: "chinese", protein: "Eggs", time: 20, cal: 380, p: 12, c: 45, f: 16 },
+            { id: 5, name: "Avocado Toast with Eggs", category: "breakfast", cuisine: "american", protein: "Eggs", time: 15, cal: 320, p: 14, c: 25, f: 20 },
+            { id: 6, name: "Besan Chilla", category: "breakfast", cuisine: "indian", protein: "Chickpea Flour", time: 20, cal: 180, p: 8, c: 22, f: 7 },
+            { id: 7, name: "Scrambled Tofu", category: "breakfast", cuisine: "american", protein: "Tofu", time: 15, cal: 200, p: 16, c: 8, f: 12 },
+            { id: 8, name: "Moong Dal Cheela", category: "breakfast", cuisine: "indian", protein: "Moong Dal", time: 25, cal: 190, p: 12, c: 25, f: 5 },
+            { id: 31, name: "Poha with Peanuts", category: "breakfast", cuisine: "indian", protein: "Peanuts", time: 15, cal: 280, p: 8, c: 40, f: 10 },
+            { id: 32, name: "Upma with Vegetables", category: "breakfast", cuisine: "indian", protein: "Semolina", time: 20, cal: 250, p: 7, c: 38, f: 8 },
+            { id: 33, name: "Egg Bhurji", category: "breakfast", cuisine: "indian", protein: "Eggs", time: 15, cal: 240, p: 14, c: 6, f: 18 },
+            { id: 34, name: "French Toast", category: "breakfast", cuisine: "american", protein: "Eggs", time: 15, cal: 300, p: 10, c: 35, f: 14 },
+            { id: 35, name: "Idli with Sambar", category: "breakfast", cuisine: "indian", protein: "Lentils", time: 20, cal: 220, p: 8, c: 40, f: 4 },
+            { id: 36, name: "Dosa with Chutney", category: "breakfast", cuisine: "indian", protein: "Lentils", time: 25, cal: 250, p: 7, c: 38, f: 8 },
+            { id: 37, name: "Aloo Paratha", category: "breakfast", cuisine: "indian", protein: "Curd (side)", time: 25, cal: 320, p: 8, c: 42, f: 14 },
+            { id: 38, name: "Smoothie Bowl", category: "breakfast", cuisine: "american", protein: "Protein Powder", time: 10, cal: 280, p: 20, c: 35, f: 8 },
+            { id: 39, name: "Egg Sandwich", category: "breakfast", cuisine: "american", protein: "Eggs", time: 10, cal: 300, p: 15, c: 28, f: 14 },
+            { id: 40, name: "Anda Pav", category: "breakfast", cuisine: "indian", protein: "Eggs", time: 15, cal: 320, p: 14, c: 32, f: 16 },
+            { id: 41, name: "Sabudana Khichdi", category: "breakfast", cuisine: "indian", protein: "Peanuts", time: 20, cal: 300, p: 6, c: 50, f: 10 },
+            { id: 42, name: "Vermicelli Upma", category: "breakfast", cuisine: "indian", protein: "Peanuts", time: 15, cal: 260, p: 7, c: 42, f: 8 },
             
             // Lunch options
-            { id: 9, name: "Dal Tadka", category: "lunch", cuisine: "indian", protein: "Lentils", time: 30 },
-            { id: 10, name: "Chicken Stir Fry", category: "lunch", cuisine: "chinese", protein: "Chicken", time: 25 },
-            { id: 11, name: "Paneer Butter Masala", category: "lunch", cuisine: "indian", protein: "Paneer", time: 35 },
-            { id: 12, name: "Grilled Chicken Salad", category: "lunch", cuisine: "american", protein: "Chicken", time: 20 },
-            { id: 13, name: "Rajma Curry", category: "lunch", cuisine: "indian", protein: "Kidney Beans", time: 40 },
-            { id: 14, name: "Thai Basil Tofu", category: "lunch", cuisine: "thai", protein: "Tofu", time: 25 },
-            { id: 15, name: "Chole (Chickpea Curry)", category: "lunch", cuisine: "indian", protein: "Chickpeas", time: 35 },
-            { id: 16, name: "Teriyaki Chicken", category: "lunch", cuisine: "japanese", protein: "Chicken", time: 25 },
-            { id: 17, name: "Egg Curry", category: "lunch", cuisine: "indian", protein: "Eggs", time: 30 },
-            { id: 18, name: "Mediterranean Chickpea Bowl", category: "lunch", cuisine: "mediterranean", protein: "Chickpeas", time: 20 },
-            { id: 43, name: "Kadhi Pakora", category: "lunch", cuisine: "indian", protein: "Chickpea Flour", time: 35 },
-            { id: 44, name: "Chicken Biryani", category: "lunch", cuisine: "indian", protein: "Chicken", time: 45 },
-            { id: 45, name: "Veg Pulao with Raita", category: "lunch", cuisine: "indian", protein: "Yogurt", time: 30 },
-            { id: 46, name: "Lemon Chicken", category: "lunch", cuisine: "chinese", protein: "Chicken", time: 25 },
-            { id: 47, name: "Palak Dal", category: "lunch", cuisine: "indian", protein: "Lentils", time: 30 },
-            { id: 48, name: "Chicken Wrap", category: "lunch", cuisine: "american", protein: "Chicken", time: 15 },
-            { id: 49, name: "Tofu Fried Rice", category: "lunch", cuisine: "chinese", protein: "Tofu", time: 20 },
-            { id: 50, name: "Sambar Rice", category: "lunch", cuisine: "indian", protein: "Lentils", time: 35 },
-            { id: 51, name: "Paneer Bhurji", category: "lunch", cuisine: "indian", protein: "Paneer", time: 20 },
-            { id: 52, name: "Chicken Caesar Salad", category: "lunch", cuisine: "american", protein: "Chicken", time: 20 },
-            { id: 53, name: "Chana Masala", category: "lunch", cuisine: "indian", protein: "Chickpeas", time: 30 },
-            { id: 54, name: "Shrimp Pad Thai", category: "lunch", cuisine: "thai", protein: "Shrimp", time: 25 },
-            { id: 55, name: "Black Bean Bowl", category: "lunch", cuisine: "mexican", protein: "Black Beans", time: 20 },
-            { id: 56, name: "Masoor Dal", category: "lunch", cuisine: "indian", protein: "Red Lentils", time: 25 },
-            { id: 57, name: "Paneer Tikka Wrap", category: "lunch", cuisine: "indian", protein: "Paneer", time: 25 },
-            { id: 58, name: "Quinoa Buddha Bowl", category: "lunch", cuisine: "mediterranean", protein: "Chickpeas", time: 25 },
+            { id: 9, name: "Dal Tadka", category: "lunch", cuisine: "indian", protein: "Lentils", time: 30, cal: 220, p: 12, c: 32, f: 6 },
+            { id: 10, name: "Chicken Stir Fry", category: "lunch", cuisine: "chinese", protein: "Chicken", time: 25, cal: 320, p: 28, c: 15, f: 16 },
+            { id: 11, name: "Paneer Butter Masala", category: "lunch", cuisine: "indian", protein: "Paneer", time: 35, cal: 420, p: 18, c: 20, f: 30 },
+            { id: 12, name: "Grilled Chicken Salad", category: "lunch", cuisine: "american", protein: "Chicken", time: 20, cal: 280, p: 32, c: 12, f: 12 },
+            { id: 13, name: "Rajma Curry", category: "lunch", cuisine: "indian", protein: "Kidney Beans", time: 40, cal: 260, p: 14, c: 38, f: 6 },
+            { id: 14, name: "Thai Basil Tofu", category: "lunch", cuisine: "thai", protein: "Tofu", time: 25, cal: 280, p: 18, c: 18, f: 16 },
+            { id: 15, name: "Chole (Chickpea Curry)", category: "lunch", cuisine: "indian", protein: "Chickpeas", time: 35, cal: 280, p: 12, c: 40, f: 8 },
+            { id: 16, name: "Teriyaki Chicken", category: "lunch", cuisine: "japanese", protein: "Chicken", time: 25, cal: 340, p: 30, c: 22, f: 14 },
+            { id: 17, name: "Egg Curry", category: "lunch", cuisine: "indian", protein: "Eggs", time: 30, cal: 280, p: 16, c: 14, f: 18 },
+            { id: 18, name: "Mediterranean Chickpea Bowl", category: "lunch", cuisine: "mediterranean", protein: "Chickpeas", time: 20, cal: 320, p: 14, c: 42, f: 12 },
+            { id: 43, name: "Kadhi Pakora", category: "lunch", cuisine: "indian", protein: "Chickpea Flour", time: 35, cal: 240, p: 10, c: 28, f: 10 },
+            { id: 44, name: "Chicken Biryani", category: "lunch", cuisine: "indian", protein: "Chicken", time: 45, cal: 480, p: 28, c: 52, f: 18 },
+            { id: 45, name: "Veg Pulao with Raita", category: "lunch", cuisine: "indian", protein: "Yogurt", time: 30, cal: 320, p: 10, c: 48, f: 10 },
+            { id: 46, name: "Lemon Chicken", category: "lunch", cuisine: "chinese", protein: "Chicken", time: 25, cal: 340, p: 28, c: 20, f: 16 },
+            { id: 47, name: "Palak Dal", category: "lunch", cuisine: "indian", protein: "Lentils", time: 30, cal: 200, p: 12, c: 28, f: 5 },
+            { id: 48, name: "Chicken Wrap", category: "lunch", cuisine: "american", protein: "Chicken", time: 15, cal: 380, p: 26, c: 35, f: 14 },
+            { id: 49, name: "Tofu Fried Rice", category: "lunch", cuisine: "chinese", protein: "Tofu", time: 20, cal: 340, p: 16, c: 42, f: 12 },
+            { id: 50, name: "Sambar Rice", category: "lunch", cuisine: "indian", protein: "Lentils", time: 35, cal: 300, p: 12, c: 50, f: 6 },
+            { id: 51, name: "Paneer Bhurji", category: "lunch", cuisine: "indian", protein: "Paneer", time: 20, cal: 320, p: 18, c: 10, f: 24 },
+            { id: 52, name: "Chicken Caesar Salad", category: "lunch", cuisine: "american", protein: "Chicken", time: 20, cal: 350, p: 30, c: 14, f: 20 },
+            { id: 53, name: "Chana Masala", category: "lunch", cuisine: "indian", protein: "Chickpeas", time: 30, cal: 260, p: 12, c: 38, f: 8 },
+            { id: 54, name: "Shrimp Pad Thai", category: "lunch", cuisine: "thai", protein: "Shrimp", time: 25, cal: 400, p: 24, c: 45, f: 14 },
+            { id: 55, name: "Black Bean Bowl", category: "lunch", cuisine: "mexican", protein: "Black Beans", time: 20, cal: 340, p: 14, c: 52, f: 8 },
+            { id: 56, name: "Masoor Dal", category: "lunch", cuisine: "indian", protein: "Red Lentils", time: 25, cal: 200, p: 14, c: 30, f: 4 },
+            { id: 57, name: "Paneer Tikka Wrap", category: "lunch", cuisine: "indian", protein: "Paneer", time: 25, cal: 400, p: 20, c: 38, f: 20 },
+            { id: 58, name: "Quinoa Buddha Bowl", category: "lunch", cuisine: "mediterranean", protein: "Chickpeas", time: 25, cal: 380, p: 16, c: 48, f: 14 },
             
             // Dinner options
-            { id: 19, name: "Palak Paneer", category: "dinner", cuisine: "indian", protein: "Paneer", time: 35 },
-            { id: 20, name: "Chicken Tikka Masala", category: "dinner", cuisine: "indian", protein: "Chicken", time: 40 },
-            { id: 21, name: "Pasta Primavera with Chicken", category: "dinner", cuisine: "italian", protein: "Chicken", time: 30 },
-            { id: 22, name: "Dal Makhani", category: "dinner", cuisine: "indian", protein: "Black Lentils", time: 45 },
-            { id: 23, name: "Kung Pao Chicken", category: "dinner", cuisine: "chinese", protein: "Chicken", time: 30 },
-            { id: 24, name: "Fish Curry", category: "dinner", cuisine: "indian", protein: "Fish", time: 35 },
-            { id: 25, name: "Chicken Quesadilla", category: "dinner", cuisine: "mexican", protein: "Chicken", time: 20 },
-            { id: 26, name: "Matar Paneer", category: "dinner", cuisine: "indian", protein: "Paneer", time: 30 },
-            { id: 27, name: "Thai Green Curry", category: "dinner", cuisine: "thai", protein: "Chicken/Tofu", time: 30 },
-            { id: 28, name: "Keema (Minced Meat)", category: "dinner", cuisine: "indian", protein: "Minced Meat", time: 35 },
-            { id: 29, name: "Shrimp Stir Fry", category: "dinner", cuisine: "chinese", protein: "Shrimp", time: 20 },
-            { id: 30, name: "Black Bean Tacos", category: "dinner", cuisine: "mexican", protein: "Black Beans", time: 25 },
-            { id: 59, name: "Butter Chicken", category: "dinner", cuisine: "indian", protein: "Chicken", time: 40 },
-            { id: 60, name: "Paneer Tikka", category: "dinner", cuisine: "indian", protein: "Paneer", time: 30 },
-            { id: 61, name: "Chilli Chicken", category: "dinner", cuisine: "chinese", protein: "Chicken", time: 30 },
-            { id: 62, name: "Mutton Curry", category: "dinner", cuisine: "indian", protein: "Mutton", time: 50 },
-            { id: 63, name: "Prawn Masala", category: "dinner", cuisine: "indian", protein: "Prawns", time: 30 },
-            { id: 64, name: "Tofu Tikka Masala", category: "dinner", cuisine: "indian", protein: "Tofu", time: 35 },
-            { id: 65, name: "Chicken Korma", category: "dinner", cuisine: "indian", protein: "Chicken", time: 40 },
-            { id: 66, name: "Aloo Gobi with Dal", category: "dinner", cuisine: "indian", protein: "Lentils", time: 35 },
-            { id: 67, name: "Manchurian with Fried Rice", category: "dinner", cuisine: "chinese", protein: "Soy/Paneer", time: 35 },
-            { id: 68, name: "Thai Red Curry", category: "dinner", cuisine: "thai", protein: "Chicken/Tofu", time: 30 },
-            { id: 69, name: "Penne Arrabiata with Chicken", category: "dinner", cuisine: "italian", protein: "Chicken", time: 25 },
-            { id: 70, name: "Fish Tacos", category: "dinner", cuisine: "mexican", protein: "Fish", time: 25 },
-            { id: 71, name: "Chicken Alfredo Pasta", category: "dinner", cuisine: "italian", protein: "Chicken", time: 30 },
-            { id: 72, name: "Bhindi Masala with Dal", category: "dinner", cuisine: "indian", protein: "Lentils", time: 35 },
-            { id: 73, name: "Sesame Chicken", category: "dinner", cuisine: "chinese", protein: "Chicken", time: 30 },
-            { id: 74, name: "Paneer Do Pyaza", category: "dinner", cuisine: "indian", protein: "Paneer", time: 30 },
-            { id: 75, name: "Chicken Shawarma Bowl", category: "dinner", cuisine: "mediterranean", protein: "Chicken", time: 30 },
-            { id: 76, name: "Malai Kofta", category: "dinner", cuisine: "indian", protein: "Paneer", time: 40 },
-            { id: 77, name: "General Tso's Chicken", category: "dinner", cuisine: "chinese", protein: "Chicken", time: 30 },
-            { id: 78, name: "Burrito Bowl", category: "dinner", cuisine: "mexican", protein: "Chicken/Beans", time: 25 },
-            { id: 79, name: "Kadai Paneer", category: "dinner", cuisine: "indian", protein: "Paneer", time: 30 },
-            { id: 80, name: "Lemon Garlic Salmon", category: "dinner", cuisine: "mediterranean", protein: "Salmon", time: 25 }
+            { id: 19, name: "Palak Paneer", category: "dinner", cuisine: "indian", protein: "Paneer", time: 35, cal: 360, p: 18, c: 14, f: 26 },
+            { id: 20, name: "Chicken Tikka Masala", category: "dinner", cuisine: "indian", protein: "Chicken", time: 40, cal: 400, p: 32, c: 18, f: 22 },
+            { id: 21, name: "Pasta Primavera with Chicken", category: "dinner", cuisine: "italian", protein: "Chicken", time: 30, cal: 420, p: 28, c: 48, f: 14 },
+            { id: 22, name: "Dal Makhani", category: "dinner", cuisine: "indian", protein: "Black Lentils", time: 45, cal: 320, p: 14, c: 38, f: 12 },
+            { id: 23, name: "Kung Pao Chicken", category: "dinner", cuisine: "chinese", protein: "Chicken", time: 30, cal: 380, p: 30, c: 22, f: 20 },
+            { id: 24, name: "Fish Curry", category: "dinner", cuisine: "indian", protein: "Fish", time: 35, cal: 300, p: 28, c: 12, f: 16 },
+            { id: 25, name: "Chicken Quesadilla", category: "dinner", cuisine: "mexican", protein: "Chicken", time: 20, cal: 450, p: 28, c: 35, f: 22 },
+            { id: 26, name: "Matar Paneer", category: "dinner", cuisine: "indian", protein: "Paneer", time: 30, cal: 340, p: 16, c: 20, f: 22 },
+            { id: 27, name: "Thai Green Curry", category: "dinner", cuisine: "thai", protein: "Chicken/Tofu", time: 30, cal: 360, p: 26, c: 18, f: 22 },
+            { id: 28, name: "Keema (Minced Meat)", category: "dinner", cuisine: "indian", protein: "Minced Meat", time: 35, cal: 380, p: 28, c: 12, f: 26 },
+            { id: 29, name: "Shrimp Stir Fry", category: "dinner", cuisine: "chinese", protein: "Shrimp", time: 20, cal: 280, p: 26, c: 14, f: 14 },
+            { id: 30, name: "Black Bean Tacos", category: "dinner", cuisine: "mexican", protein: "Black Beans", time: 25, cal: 380, p: 14, c: 48, f: 14 },
+            { id: 59, name: "Butter Chicken", category: "dinner", cuisine: "indian", protein: "Chicken", time: 40, cal: 440, p: 32, c: 16, f: 28 },
+            { id: 60, name: "Paneer Tikka", category: "dinner", cuisine: "indian", protein: "Paneer", time: 30, cal: 320, p: 18, c: 10, f: 24 },
+            { id: 61, name: "Chilli Chicken", category: "dinner", cuisine: "chinese", protein: "Chicken", time: 30, cal: 360, p: 28, c: 20, f: 18 },
+            { id: 62, name: "Mutton Curry", category: "dinner", cuisine: "indian", protein: "Mutton", time: 50, cal: 420, p: 32, c: 14, f: 28 },
+            { id: 63, name: "Prawn Masala", category: "dinner", cuisine: "indian", protein: "Prawns", time: 30, cal: 280, p: 26, c: 12, f: 14 },
+            { id: 64, name: "Tofu Tikka Masala", category: "dinner", cuisine: "indian", protein: "Tofu", time: 35, cal: 320, p: 18, c: 20, f: 20 },
+            { id: 65, name: "Chicken Korma", category: "dinner", cuisine: "indian", protein: "Chicken", time: 40, cal: 460, p: 30, c: 18, f: 32 },
+            { id: 66, name: "Aloo Gobi with Dal", category: "dinner", cuisine: "indian", protein: "Lentils", time: 35, cal: 280, p: 12, c: 42, f: 8 },
+            { id: 67, name: "Manchurian with Fried Rice", category: "dinner", cuisine: "chinese", protein: "Soy/Paneer", time: 35, cal: 420, p: 14, c: 52, f: 18 },
+            { id: 68, name: "Thai Red Curry", category: "dinner", cuisine: "thai", protein: "Chicken/Tofu", time: 30, cal: 380, p: 26, c: 20, f: 24 },
+            { id: 69, name: "Penne Arrabiata with Chicken", category: "dinner", cuisine: "italian", protein: "Chicken", time: 25, cal: 400, p: 28, c: 46, f: 12 },
+            { id: 70, name: "Fish Tacos", category: "dinner", cuisine: "mexican", protein: "Fish", time: 25, cal: 360, p: 24, c: 32, f: 16 },
+            { id: 71, name: "Chicken Alfredo Pasta", category: "dinner", cuisine: "italian", protein: "Chicken", time: 30, cal: 520, p: 32, c: 48, f: 24 },
+            { id: 72, name: "Bhindi Masala with Dal", category: "dinner", cuisine: "indian", protein: "Lentils", time: 35, cal: 240, p: 12, c: 32, f: 8 },
+            { id: 73, name: "Sesame Chicken", category: "dinner", cuisine: "chinese", protein: "Chicken", time: 30, cal: 400, p: 28, c: 28, f: 20 },
+            { id: 74, name: "Paneer Do Pyaza", category: "dinner", cuisine: "indian", protein: "Paneer", time: 30, cal: 360, p: 18, c: 16, f: 26 },
+            { id: 75, name: "Chicken Shawarma Bowl", category: "dinner", cuisine: "mediterranean", protein: "Chicken", time: 30, cal: 420, p: 32, c: 38, f: 16 },
+            { id: 76, name: "Malai Kofta", category: "dinner", cuisine: "indian", protein: "Paneer", time: 40, cal: 440, p: 14, c: 28, f: 32 },
+            { id: 77, name: "General Tso's Chicken", category: "dinner", cuisine: "chinese", protein: "Chicken", time: 30, cal: 420, p: 26, c: 32, f: 22 },
+            { id: 78, name: "Burrito Bowl", category: "dinner", cuisine: "mexican", protein: "Chicken/Beans", time: 25, cal: 480, p: 28, c: 52, f: 18 },
+            { id: 79, name: "Kadai Paneer", category: "dinner", cuisine: "indian", protein: "Paneer", time: 30, cal: 380, p: 18, c: 14, f: 28 },
+            { id: 80, name: "Lemon Garlic Salmon", category: "dinner", cuisine: "mediterranean", protein: "Salmon", time: 25, cal: 360, p: 34, c: 8, f: 22 }
+        ];
+            { id: 79, name: "Kadai Paneer", category: "dinner", cuisine: "indian", protein: "Paneer", time: 30, cal: 380, p: 18, c: 14, f: 28 },
+            { id: 80, name: "Lemon Garlic Salmon", category: "dinner", cuisine: "mediterranean", protein: "Salmon", time: 25, cal: 360, p: 34, c: 8, f: 22 }
         ];
 
         const defaultVeggies = [
@@ -615,6 +653,12 @@
                             <div class="meal-meta">
                                 <span class="protein-tag">🥩 ${meal.protein}</span>
                                 ⏱️ ${meal.time} mins
+                            </div>
+                            <div class="macros">
+                                <span class="macro-tag macro-cal">${meal.cal || 0} cal</span>
+                                <span class="macro-tag macro-p">P: ${meal.p || 0}g</span>
+                                <span class="macro-tag macro-c">C: ${meal.c || 0}g</span>
+                                <span class="macro-tag macro-f">F: ${meal.f || 0}g</span>
                             </div>
                         </div>
                         <div class="meal-actions">
@@ -758,7 +802,11 @@
                 category: document.getElementById('meal-category').value,
                 cuisine: document.getElementById('meal-cuisine').value,
                 protein: document.getElementById('meal-protein').value,
-                time: parseInt(document.getElementById('meal-time').value)
+                time: parseInt(document.getElementById('meal-time').value),
+                cal: parseInt(document.getElementById('meal-calories').value) || 0,
+                p: parseInt(document.getElementById('meal-protein-g').value) || 0,
+                c: parseInt(document.getElementById('meal-carbs').value) || 0,
+                f: parseInt(document.getElementById('meal-fat').value) || 0
             };
             
             if (editId) {
@@ -782,6 +830,10 @@
             document.getElementById('meal-cuisine').value = meal.cuisine;
             document.getElementById('meal-protein').value = meal.protein;
             document.getElementById('meal-time').value = meal.time;
+            document.getElementById('meal-calories').value = meal.cal || 0;
+            document.getElementById('meal-protein-g').value = meal.p || 0;
+            document.getElementById('meal-carbs').value = meal.c || 0;
+            document.getElementById('meal-fat').value = meal.f || 0;
             document.getElementById('meal-modal').classList.add('active');
         }
 
