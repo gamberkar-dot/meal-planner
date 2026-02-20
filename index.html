@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Weekly Meal Planner</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 10px;
+            padding-bottom: 80px;
+        }
+        
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            color: white;
+            text-align: center;
+            font-size: 24px;
+            margin-bottom: 15px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+        }
+        
+        .tabs {
+            display: flex;
+            background: rgba(255,255,255,0.2);
+            border-radius: 12px;
+            padding: 4px;
+            margin-bottom: 15px;
+        }
+        
+        .tab {
+            flex: 1;
+            padding: 12px 8px;
+            border: none;
+            background: transparent;
+            color: white;
+            font-size: 14px;
+            font-weight: 600;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .tab.active {
+            background: white;
+            color: #667eea;
+        }
+        
+        .panel {
+            display: none;
+            background: white;
+            border-radius: 16px;
+            padding: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        }
+        
+        .panel.active {
+            display: block;
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 10px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+        
+        .btn-danger {
+            background: #ff6b6b;
+            color: white;
+        }
+        
+        .btn:active {
+            transform: scale(0.98);
+        }
+        
+        /* Meal Repository Styles */
+        .meal-category {
+            margin-bottom: 20px;
+        }
+        
+        .category-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 2px solid #667eea;
+            margin-bottom: 10px;
+        }
+        
+        .category-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #333;
+        }
+        
+        .meal-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            margin-bottom: 8px;
+        }
+        
+        .meal-info {
+            flex: 1;
+        }
+        
+        .meal-name {
+            font-weight: 600;
+            color: #333;
+            font-size: 15px;
+        }
+        
+        .meal-meta {
+            font-size: 12px;
+            color: #666;
+            margin-top: 2px;
+        }
+        
+        .meal-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .btn-icon {
+            width: 36px;
+            height: 36px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        
+        .btn-edit {
+            background: #4ecdc4;
+            color: white;
+        }
+        
+        .btn-delete {
+            background: #ff6b6b;
+            color: white;
+        }
+        
+        /* Week Plan Styles */
+        .week-day {
+            margin-bottom: 15px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 12px;
+        }
+        
+        .day-header {
+            font-weight: 700;
+            color: #667eea;
+            font-size: 16px;
+            margin-bottom: 8px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .meal-slot {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .meal-slot:last-child {
+            border-bottom: none;
+        }
+        
+        .slot-label {
+            font-weight: 600;
+            color: #666;
+            font-size: 13px;
+            min-width: 70px;
+        }
+        
+        .slot-meal {
+            flex: 1;
+            font-size: 14px;
+            color: #333;
+            text-align: right;
+        }
+        
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .modal.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            width: 100%;
+            max-width: 400px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            font-size: 20px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 15px;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-label {
+            display: block;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+        
+        .form-input, .form-select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        
+        .form-input:focus, .form-select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        /* Sides Section */
+        .sides-section {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f0f8ff;
+            border-radius: 12px;
+        }
+        
+        .sides-title {
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .sides-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        
+        .side-tag {
+            background: #667eea;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .side-remove {
+            cursor: pointer;
+            font-weight: bold;
+        }
+        
+        /* Badge for cuisine */
+        .cuisine-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-left: 5px;
+        }
+        
+        .cuisine-indian { background: #ff9933; color: white; }
+        .cuisine-chinese { background: #de2910; color: white; }
+        .cuisine-italian { background: #009246; color: white; }
+        .cuisine-mexican { background: #006847; color: white; }
+        .cuisine-thai { background: #a51931; color: white; }
+        .cuisine-american { background: #3c3b6e; color: white; }
+        .cuisine-mediterranean { background: #0066cc; color: white; }
+        .cuisine-japanese { background: #bc002d; color: white; }
+        
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            padding: 30px;
+            color: #666;
+        }
+        
+        .empty-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+        
+        /* Info box */
+        .info-box {
+            background: #e8f4fd;
+            border-left: 4px solid #667eea;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 14px;
+            color: #333;
+        }
+        
+        /* Protein indicator */
+        .protein-tag {
+            background: #28a745;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 8px;
+            font-size: 10px;
+            margin-left: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🍽️ Weekly Meal Planner</h1>
+        
+        <div class="tabs">
+            <button class="tab active" data-tab="plan">Week Plan</button>
+            <button class="tab" data-tab="meals">Meals</button>
+            <button class="tab" data-tab="sides">Sides</button>
+        </div>
+        
+        <!-- Week Plan Panel -->
+        <div class="panel active" id="plan-panel">
+            <div class="info-box">
+                📋 3 main protein dishes per week, mix & match with veggies and carbs!
+            </div>
+            <button class="btn btn-primary" onclick="generateWeekPlan()">🎲 Generate Week Plan</button>
+            <div id="week-plan"></div>
+        </div>
+        
+        <!-- Meals Panel -->
+        <div class="panel" id="meals-panel">
+            <button class="btn btn-primary" onclick="openAddMealModal()">+ Add New Meal</button>
+            
+            <div class="meal-category">
+                <div class="category-header">
+                    <span class="category-title">🍳 Breakfast</span>
+                </div>
+                <div id="breakfast-list"></div>
+            </div>
+            
+            <div class="meal-category">
+                <div class="category-header">
+                    <span class="category-title">🥗 Lunch</span>
+                </div>
+                <div id="lunch-list"></div>
+            </div>
+            
+            <div class="meal-category">
+                <div class="category-header">
+                    <span class="category-title">🍛 Dinner</span>
+                </div>
+                <div id="dinner-list"></div>
+            </div>
+        </div>
+        
+        <!-- Sides Panel -->
+        <div class="panel" id="sides-panel">
+            <div class="sides-section">
+                <div class="sides-title">🥬 Vegetables</div>
+                <div class="sides-list" id="veggies-list"></div>
+                <div style="margin-top: 10px; display: flex; gap: 8px;">
+                    <input type="text" class="form-input" id="new-veggie" placeholder="Add vegetable...">
+                    <button class="btn btn-primary" style="width: auto; padding: 10px 20px;" onclick="addSide('veggies')">+</button>
+                </div>
+            </div>
+            
+            <div class="sides-section">
+                <div class="sides-title">🍚 Carbs</div>
+                <div class="sides-list" id="carbs-list"></div>
+                <div style="margin-top: 10px; display: flex; gap: 8px;">
+                    <input type="text" class="form-input" id="new-carb" placeholder="Add carb...">
+                    <button class="btn btn-primary" style="width: auto; padding: 10px 20px;" onclick="addSide('carbs')">+</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Add/Edit Meal Modal -->
+    <div class="modal" id="meal-modal">
+        <div class="modal-content">
+            <div class="modal-header" id="modal-title">Add New Meal</div>
+            <form id="meal-form" onsubmit="saveMeal(event)">
+                <input type="hidden" id="edit-meal-id">
+                <div class="form-group">
+                    <label class="form-label">Meal Name</label>
+                    <input type="text" class="form-input" id="meal-name" required placeholder="e.g., Paneer Tikka">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Category</label>
+                    <select class="form-select" id="meal-category" required>
+                        <option value="breakfast">Breakfast</option>
+                        <option value="lunch">Lunch</option>
+                        <option value="dinner">Dinner</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Cuisine</label>
+                    <select class="form-select" id="meal-cuisine" required>
+                        <option value="indian">Indian</option>
+                        <option value="chinese">Chinese</option>
+                        <option value="italian">Italian</option>
+                        <option value="mexican">Mexican</option>
+                        <option value="thai">Thai</option>
+                        <option value="american">American</option>
+                        <option value="mediterranean">Mediterranean</option>
+                        <option value="japanese">Japanese</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Protein Source</label>
+                    <input type="text" class="form-input" id="meal-protein" required placeholder="e.g., Paneer, Chicken, Eggs">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Prep Time (mins)</label>
+                    <input type="number" class="form-input" id="meal-time" required placeholder="30" min="5" max="120">
+                </div>
+                <button type="submit" class="btn btn-primary">Save Meal</button>
+                <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Default meal repository with mix of cuisines
+        const defaultMeals = [
+            // Breakfast options
+            { id: 1, name: "Masala Omelette", category: "breakfast", cuisine: "indian", protein: "Eggs", time: 15 },
+            { id: 2, name: "Paneer Paratha", category: "breakfast", cuisine: "indian", protein: "Paneer", time: 25 },
+            { id: 3, name: "Greek Yogurt Bowl", category: "breakfast", cuisine: "mediterranean", protein: "Greek Yogurt", time: 10 },
+            { id: 4, name: "Egg Fried Rice", category: "breakfast", cuisine: "chinese", protein: "Eggs", time: 20 },
+            { id: 5, name: "Avocado Toast with Eggs", category: "breakfast", cuisine: "american", protein: "Eggs", time: 15 },
+            { id: 6, name: "Besan Chilla", category: "breakfast", cuisine: "indian", protein: "Chickpea Flour", time: 20 },
+            { id: 7, name: "Scrambled Tofu", category: "breakfast", cuisine: "american", protein: "Tofu", time: 15 },
+            { id: 8, name: "Moong Dal Cheela", category: "breakfast", cuisine: "indian", protein: "Moong Dal", time: 25 },
+            { id: 31, name: "Poha with Peanuts", category: "breakfast", cuisine: "indian", protein: "Peanuts", time: 15 },
+            { id: 32, name: "Upma with Vegetables", category: "breakfast", cuisine: "indian", protein: "Semolina", time: 20 },
+            { id: 33, name: "Egg Bhurji", category: "breakfast", cuisine: "indian", protein: "Eggs", time: 15 },
+            { id: 34, name: "French Toast", category: "breakfast", cuisine: "american", protein: "Eggs", time: 15 },
+            { id: 35, name: "Idli with Sambar", category: "breakfast", cuisine: "indian", protein: "Lentils", time: 20 },
+            { id: 36, name: "Dosa with Chutney", category: "breakfast", cuisine: "indian", protein: "Lentils", time: 25 },
+            { id: 37, name: "Aloo Paratha", category: "breakfast", cuisine: "indian", protein: "Curd (side)", time: 25 },
+            { id: 38, name: "Smoothie Bowl", category: "breakfast", cuisine: "american", protein: "Protein Powder", time: 10 },
+            { id: 39, name: "Egg Sandwich", category: "breakfast", cuisine: "american", protein: "Eggs", time: 10 },
+            { id: 40, name: "Anda Pav", category: "breakfast", cuisine: "indian", protein: "Eggs", time: 15 },
+            { id: 41, name: "Sabudana Khichdi", category: "breakfast", cuisine: "indian", protein: "Peanuts", time: 20 },
+            { id: 42, name: "Vermicelli Upma", category: "breakfast", cuisine: "indian", protein: "Peanuts", time: 15 },
+            
+            // Lunch options
+            { id: 9, name: "Dal Tadka", category: "lunch", cuisine: "indian", protein: "Lentils", time: 30 },
+            { id: 10, name: "Chicken Stir Fry", category: "lunch", cuisine: "chinese", protein: "Chicken", time: 25 },
+            { id: 11, name: "Paneer Butter Masala", category: "lunch", cuisine: "indian", protein: "Paneer", time: 35 },
+            { id: 12, name: "Grilled Chicken Salad", category: "lunch", cuisine: "american", protein: "Chicken", time: 20 },
+            { id: 13, name: "Rajma Curry", category: "lunch", cuisine: "indian", protein: "Kidney Beans", time: 40 },
+            { id: 14, name: "Thai Basil Tofu", category: "lunch", cuisine: "thai", protein: "Tofu", time: 25 },
+            { id: 15, name: "Chole (Chickpea Curry)", category: "lunch", cuisine: "indian", protein: "Chickpeas", time: 35 },
+            { id: 16, name: "Teriyaki Chicken", category: "lunch", cuisine: "japanese", protein: "Chicken", time: 25 },
+            { id: 17, name: "Egg Curry", category: "lunch", cuisine: "indian", protein: "Eggs", time: 30 },
+            { id: 18, name: "Mediterranean Chickpea Bowl", category: "lunch", cuisine: "mediterranean", protein: "Chickpeas", time: 20 },
+            { id: 43, name: "Kadhi Pakora", category: "lunch", cuisine: "indian", protein: "Chickpea Flour", time: 35 },
+            { id: 44, name: "Chicken Biryani", category: "lunch", cuisine: "indian", protein: "Chicken", time: 45 },
+            { id: 45, name: "Veg Pulao with Raita", category: "lunch", cuisine: "indian", protein: "Yogurt", time: 30 },
+            { id: 46, name: "Lemon Chicken", category: "lunch", cuisine: "chinese", protein: "Chicken", time: 25 },
+            { id: 47, name: "Palak Dal", category: "lunch", cuisine: "indian", protein: "Lentils", time: 30 },
+            { id: 48, name: "Chicken Wrap", category: "lunch", cuisine: "american", protein: "Chicken", time: 15 },
+            { id: 49, name: "Tofu Fried Rice", category: "lunch", cuisine: "chinese", protein: "Tofu", time: 20 },
+            { id: 50, name: "Sambar Rice", category: "lunch", cuisine: "indian", protein: "Lentils", time: 35 },
+            { id: 51, name: "Paneer Bhurji", category: "lunch", cuisine: "indian", protein: "Paneer", time: 20 },
+            { id: 52, name: "Chicken Caesar Salad", category: "lunch", cuisine: "american", protein: "Chicken", time: 20 },
+            { id: 53, name: "Chana Masala", category: "lunch", cuisine: "indian", protein: "Chickpeas", time: 30 },
+            { id: 54, name: "Shrimp Pad Thai", category: "lunch", cuisine: "thai", protein: "Shrimp", time: 25 },
+            { id: 55, name: "Black Bean Bowl", category: "lunch", cuisine: "mexican", protein: "Black Beans", time: 20 },
+            { id: 56, name: "Masoor Dal", category: "lunch", cuisine: "indian", protein: "Red Lentils", time: 25 },
+            { id: 57, name: "Paneer Tikka Wrap", category: "lunch", cuisine: "indian", protein: "Paneer", time: 25 },
+            { id: 58, name: "Quinoa Buddha Bowl", category: "lunch", cuisine: "mediterranean", protein: "Chickpeas", time: 25 },
+            
+            // Dinner options
+            { id: 19, name: "Palak Paneer", category: "dinner", cuisine: "indian", protein: "Paneer", time: 35 },
+            { id: 20, name: "Chicken Tikka Masala", category: "dinner", cuisine: "indian", protein: "Chicken", time: 40 },
+            { id: 21, name: "Pasta Primavera with Chicken", category: "dinner", cuisine: "italian", protein: "Chicken", time: 30 },
+            { id: 22, name: "Dal Makhani", category: "dinner", cuisine: "indian", protein: "Black Lentils", time: 45 },
+            { id: 23, name: "Kung Pao Chicken", category: "dinner", cuisine: "chinese", protein: "Chicken", time: 30 },
+            { id: 24, name: "Fish Curry", category: "dinner", cuisine: "indian", protein: "Fish", time: 35 },
+            { id: 25, name: "Chicken Quesadilla", category: "dinner", cuisine: "mexican", protein: "Chicken", time: 20 },
+            { id: 26, name: "Matar Paneer", category: "dinner", cuisine: "indian", protein: "Paneer", time: 30 },
+            { id: 27, name: "Thai Green Curry", category: "dinner", cuisine: "thai", protein: "Chicken/Tofu", time: 30 },
+            { id: 28, name: "Keema (Minced Meat)", category: "dinner", cuisine: "indian", protein: "Minced Meat", time: 35 },
+            { id: 29, name: "Shrimp Stir Fry", category: "dinner", cuisine: "chinese", protein: "Shrimp", time: 20 },
+            { id: 30, name: "Black Bean Tacos", category: "dinner", cuisine: "mexican", protein: "Black Beans", time: 25 },
+            { id: 59, name: "Butter Chicken", category: "dinner", cuisine: "indian", protein: "Chicken", time: 40 },
+            { id: 60, name: "Paneer Tikka", category: "dinner", cuisine: "indian", protein: "Paneer", time: 30 },
+            { id: 61, name: "Chilli Chicken", category: "dinner", cuisine: "chinese", protein: "Chicken", time: 30 },
+            { id: 62, name: "Mutton Curry", category: "dinner", cuisine: "indian", protein: "Mutton", time: 50 },
+            { id: 63, name: "Prawn Masala", category: "dinner", cuisine: "indian", protein: "Prawns", time: 30 },
+            { id: 64, name: "Tofu Tikka Masala", category: "dinner", cuisine: "indian", protein: "Tofu", time: 35 },
+            { id: 65, name: "Chicken Korma", category: "dinner", cuisine: "indian", protein: "Chicken", time: 40 },
+            { id: 66, name: "Aloo Gobi with Dal", category: "dinner", cuisine: "indian", protein: "Lentils", time: 35 },
+            { id: 67, name: "Manchurian with Fried Rice", category: "dinner", cuisine: "chinese", protein: "Soy/Paneer", time: 35 },
+            { id: 68, name: "Thai Red Curry", category: "dinner", cuisine: "thai", protein: "Chicken/Tofu", time: 30 },
+            { id: 69, name: "Penne Arrabiata with Chicken", category: "dinner", cuisine: "italian", protein: "Chicken", time: 25 },
+            { id: 70, name: "Fish Tacos", category: "dinner", cuisine: "mexican", protein: "Fish", time: 25 },
+            { id: 71, name: "Chicken Alfredo Pasta", category: "dinner", cuisine: "italian", protein: "Chicken", time: 30 },
+            { id: 72, name: "Bhindi Masala with Dal", category: "dinner", cuisine: "indian", protein: "Lentils", time: 35 },
+            { id: 73, name: "Sesame Chicken", category: "dinner", cuisine: "chinese", protein: "Chicken", time: 30 },
+            { id: 74, name: "Paneer Do Pyaza", category: "dinner", cuisine: "indian", protein: "Paneer", time: 30 },
+            { id: 75, name: "Chicken Shawarma Bowl", category: "dinner", cuisine: "mediterranean", protein: "Chicken", time: 30 },
+            { id: 76, name: "Malai Kofta", category: "dinner", cuisine: "indian", protein: "Paneer", time: 40 },
+            { id: 77, name: "General Tso's Chicken", category: "dinner", cuisine: "chinese", protein: "Chicken", time: 30 },
+            { id: 78, name: "Burrito Bowl", category: "dinner", cuisine: "mexican", protein: "Chicken/Beans", time: 25 },
+            { id: 79, name: "Kadai Paneer", category: "dinner", cuisine: "indian", protein: "Paneer", time: 30 },
+            { id: 80, name: "Lemon Garlic Salmon", category: "dinner", cuisine: "mediterranean", protein: "Salmon", time: 25 }
+        ];
+
+        const defaultVeggies = [
+            "Spinach", "Broccoli", "Bell Peppers", "Zucchini", "Cauliflower", 
+            "Green Beans", "Carrots", "Mushrooms", "Cabbage", "Bhindi (Okra)",
+            "Baingan (Eggplant)", "Aloo (Potato)", "Cucumber Salad", "Mixed Salad"
+        ];
+
+        const defaultCarbs = [
+            "Rice", "Roti/Chapati", "Naan", "Quinoa", "Brown Rice", 
+            "Pasta", "Paratha", "Jeera Rice", "Pulao", "Bread"
+        ];
+
+        // Initialize data
+        let meals = JSON.parse(localStorage.getItem('meals')) || defaultMeals;
+        let veggies = JSON.parse(localStorage.getItem('veggies')) || defaultVeggies;
+        let carbs = JSON.parse(localStorage.getItem('carbs')) || defaultCarbs;
+        let weekPlan = JSON.parse(localStorage.getItem('weekPlan')) || null;
+
+        // Tab switching
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+                tab.classList.add('active');
+                document.getElementById(`${tab.dataset.tab}-panel`).classList.add('active');
+            });
+        });
+
+        // Render functions
+        function renderMeals() {
+            ['breakfast', 'lunch', 'dinner'].forEach(category => {
+                const list = document.getElementById(`${category}-list`);
+                const categoryMeals = meals.filter(m => m.category === category);
+                
+                if (categoryMeals.length === 0) {
+                    list.innerHTML = '<div class="empty-state"><div class="empty-icon">🍽️</div>No meals yet</div>';
+                    return;
+                }
+                
+                list.innerHTML = categoryMeals.map(meal => `
+                    <div class="meal-item">
+                        <div class="meal-info">
+                            <div class="meal-name">
+                                ${meal.name}
+                                <span class="cuisine-badge cuisine-${meal.cuisine}">${meal.cuisine}</span>
+                            </div>
+                            <div class="meal-meta">
+                                <span class="protein-tag">🥩 ${meal.protein}</span>
+                                ⏱️ ${meal.time} mins
+                            </div>
+                        </div>
+                        <div class="meal-actions">
+                            <button class="btn-icon btn-edit" onclick="editMeal(${meal.id})">✏️</button>
+                            <button class="btn-icon btn-delete" onclick="deleteMeal(${meal.id})">🗑️</button>
+                        </div>
+                    </div>
+                `).join('');
+            });
+        }
+
+        function renderSides() {
+            document.getElementById('veggies-list').innerHTML = veggies.map((v, i) => `
+                <span class="side-tag">${v} <span class="side-remove" onclick="removeSide('veggies', ${i})">×</span></span>
+            `).join('');
+            
+            document.getElementById('carbs-list').innerHTML = carbs.map((c, i) => `
+                <span class="side-tag">${c} <span class="side-remove" onclick="removeSide('carbs', ${i})">×</span></span>
+            `).join('');
+        }
+
+        function renderWeekPlan() {
+            const container = document.getElementById('week-plan');
+            
+            if (!weekPlan) {
+                container.innerHTML = '<div class="empty-state"><div class="empty-icon">📅</div>Click "Generate Week Plan" to create your meal plan!</div>';
+                return;
+            }
+            
+            const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+            
+            container.innerHTML = `
+                <div class="sides-section" style="background: #fff3cd; margin-bottom: 15px;">
+                    <div class="sides-title">🍖 This Week's Main Proteins (3 dishes)</div>
+                    <div style="font-size: 14px; color: #333;">
+                        ${weekPlan.mainMeals.map(m => `<div>• ${m.name} <span class="cuisine-badge cuisine-${m.cuisine}">${m.cuisine}</span></div>`).join('')}
+                    </div>
+                </div>
+                <div class="sides-section" style="background: #d4edda; margin-bottom: 15px;">
+                    <div class="sides-title">🥬 This Week's Veggies & Carbs</div>
+                    <div style="font-size: 14px; color: #333;">
+                        <div><strong>Veggies:</strong> ${weekPlan.weekVeggies.join(', ')}</div>
+                        <div><strong>Carbs:</strong> ${weekPlan.weekCarbs.join(', ')}</div>
+                    </div>
+                </div>
+                ${days.map(day => `
+                    <div class="week-day">
+                        <div class="day-header">📆 ${day}</div>
+                        <div class="meal-slot">
+                            <span class="slot-label">🍳 Breakfast</span>
+                            <span class="slot-meal">${weekPlan.plan[day].breakfast}</span>
+                        </div>
+                        <div class="meal-slot">
+                            <span class="slot-label">🥗 Lunch</span>
+                            <span class="slot-meal">${weekPlan.plan[day].lunch}</span>
+                        </div>
+                        <div class="meal-slot">
+                            <span class="slot-label">🍛 Dinner</span>
+                            <span class="slot-meal">${weekPlan.plan[day].dinner}</span>
+                        </div>
+                    </div>
+                `).join('')}
+            `;
+        }
+
+        // Generate week plan
+        function generateWeekPlan() {
+            const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+            const breakfasts = meals.filter(m => m.category === 'breakfast');
+            const lunches = meals.filter(m => m.category === 'lunch');
+            const dinners = meals.filter(m => m.category === 'dinner');
+            
+            if (breakfasts.length < 3 || lunches.length < 3 || dinners.length < 3) {
+                alert('Please add at least 3 meals in each category (breakfast, lunch, dinner)');
+                return;
+            }
+            
+            // Select 3 main protein dishes (prioritize lunch/dinner)
+            const mainMealPool = [...lunches, ...dinners];
+            const shuffledMain = mainMealPool.sort(() => Math.random() - 0.5);
+            const mainMeals = shuffledMain.slice(0, 3);
+            
+            // Shuffle breakfasts
+            const shuffledBreakfasts = [...breakfasts].sort(() => Math.random() - 0.5);
+            
+            // Pick only 2-3 veggies and 2-3 carbs for the week
+            const weekVeggies = [...veggies].sort(() => Math.random() - 0.5).slice(0, 3);
+            const weekCarbs = [...carbs].sort(() => Math.random() - 0.5).slice(0, 2);
+            
+            const plan = {};
+            
+            days.forEach((day, index) => {
+                // Rotate through breakfasts
+                const breakfast = shuffledBreakfasts[index % shuffledBreakfasts.length];
+                
+                // Use main meals and mix with sides
+                const mainMeal = mainMeals[index % 3];
+                const veggie = weekVeggies[index % weekVeggies.length];
+                const carb = weekCarbs[index % weekCarbs.length];
+                
+                // Alternate main meal between lunch and dinner
+                if (index % 2 === 0) {
+                    plan[day] = {
+                        breakfast: breakfast.name,
+                        lunch: `${mainMeal.name} + ${veggie} + ${carb}`,
+                        dinner: `Leftover ${mainMeals[(index + 1) % 3].name} + ${weekVeggies[(index + 1) % weekVeggies.length]}`
+                    };
+                } else {
+                    plan[day] = {
+                        breakfast: breakfast.name,
+                        lunch: `${weekVeggies[(index + 2) % weekVeggies.length]} Sabzi + ${carb}`,
+                        dinner: `${mainMeals[(index + 2) % 3].name} + ${veggie} + ${carb}`
+                    };
+                }
+            });
+            
+            weekPlan = { mainMeals, weekVeggies, weekCarbs, plan };
+            localStorage.setItem('weekPlan', JSON.stringify(weekPlan));
+            renderWeekPlan();
+        }
+
+        // Modal functions
+        function openAddMealModal() {
+            document.getElementById('modal-title').textContent = 'Add New Meal';
+            document.getElementById('meal-form').reset();
+            document.getElementById('edit-meal-id').value = '';
+            document.getElementById('meal-modal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('meal-modal').classList.remove('active');
+        }
+
+        function saveMeal(e) {
+            e.preventDefault();
+            
+            const editId = document.getElementById('edit-meal-id').value;
+            const mealData = {
+                id: editId ? parseInt(editId) : Date.now(),
+                name: document.getElementById('meal-name').value,
+                category: document.getElementById('meal-category').value,
+                cuisine: document.getElementById('meal-cuisine').value,
+                protein: document.getElementById('meal-protein').value,
+                time: parseInt(document.getElementById('meal-time').value)
+            };
+            
+            if (editId) {
+                const index = meals.findIndex(m => m.id === parseInt(editId));
+                meals[index] = mealData;
+            } else {
+                meals.push(mealData);
+            }
+            
+            localStorage.setItem('meals', JSON.stringify(meals));
+            closeModal();
+            renderMeals();
+        }
+
+        function editMeal(id) {
+            const meal = meals.find(m => m.id === id);
+            document.getElementById('modal-title').textContent = 'Edit Meal';
+            document.getElementById('edit-meal-id').value = meal.id;
+            document.getElementById('meal-name').value = meal.name;
+            document.getElementById('meal-category').value = meal.category;
+            document.getElementById('meal-cuisine').value = meal.cuisine;
+            document.getElementById('meal-protein').value = meal.protein;
+            document.getElementById('meal-time').value = meal.time;
+            document.getElementById('meal-modal').classList.add('active');
+        }
+
+        function deleteMeal(id) {
+            if (confirm('Delete this meal?')) {
+                meals = meals.filter(m => m.id !== id);
+                localStorage.setItem('meals', JSON.stringify(meals));
+                renderMeals();
+            }
+        }
+
+        // Sides functions
+        function addSide(type) {
+            const input = document.getElementById(type === 'veggies' ? 'new-veggie' : 'new-carb');
+            const value = input.value.trim();
+            
+            if (value) {
+                if (type === 'veggies') {
+                    veggies.push(value);
+                    localStorage.setItem('veggies', JSON.stringify(veggies));
+                } else {
+                    carbs.push(value);
+                    localStorage.setItem('carbs', JSON.stringify(carbs));
+                }
+                input.value = '';
+                renderSides();
+            }
+        }
+
+        function removeSide(type, index) {
+            if (type === 'veggies') {
+                veggies.splice(index, 1);
+                localStorage.setItem('veggies', JSON.stringify(veggies));
+            } else {
+                carbs.splice(index, 1);
+                localStorage.setItem('carbs', JSON.stringify(carbs));
+            }
+            renderSides();
+        }
+
+        // Initialize
+        renderMeals();
+        renderSides();
+        renderWeekPlan();
+
+        // Handle enter key for adding sides
+        document.getElementById('new-veggie').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') { e.preventDefault(); addSide('veggies'); }
+        });
+        document.getElementById('new-carb').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') { e.preventDefault(); addSide('carbs'); }
+        });
+    </script>
+</body>
+</html>
